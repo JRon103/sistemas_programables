@@ -19,4 +19,5 @@ void loop()
   Serial.print (voltaje);
   Serial.print (" Temperatura:");
   Serial.println (temperatura);
+  delay(2000);
 }

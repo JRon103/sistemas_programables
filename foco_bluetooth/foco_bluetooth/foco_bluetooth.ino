@@ -26,13 +26,13 @@ void loop()
         
          if (letra== 'a' || letra == 'A')
         {
-          //Serial.write("encender");
+          Serial.write("encender");
             digitalWrite(pin, LOW);
         }
         else if (letra== 'e' || letra == 'E')
         {
           
-          //  Serial.write("apagado");
+            Serial.write("apagado");
             digitalWrite(pin, HIGH);
         }
 

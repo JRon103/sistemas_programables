@@ -6,7 +6,10 @@ void setup() {
   pinMode (motorBPin2, OUTPUT);
 }
 void loop() {
+  
+  
+  
   digitalWrite (motorAPin1, HIGH); // Al activar gira el motor A en sentido de las agujas del digitalWrite(motorBPin2, HIGH); // Al activar gira el motor B en sentido de las agujas del
   digitalWrite (motorBPin2, HIGH);
- // while(1){} // Esta parte del codigo inicia un bucle inifinito.
+  while(1){} // Esta parte del codigo inicia un bucle inifinito.
 } 
