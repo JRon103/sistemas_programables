@@ -2,8 +2,6 @@
 #include "DHT.h"
 
 #define DHTPIN 53     // Pin donde está conectado el sensor
-
-#define DHTTYPE DHT11   // Descomentar si se usa el DHT 11
 DHT dht(DHTPIN, DHTTYPE);
 
 byte rx=10;
@@ -12,7 +10,6 @@ SoftwareSerial bt(rx,tx);
 float temperatura;
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
   bt.begin(9600);
    dht.begin();
@@ -20,15 +17,11 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  
-  float t = dht.readTemperature(); //Leemos la temperatura en grados CelsiusSerial.print (" Temperatura:");
+  float t = dht.readTemperature();
   
   if(bt.available()>0){
-    //bt.println(bt.readString());
     char letra=bt.read();
-    //Serial.println(letra);
-    if(letra ==  97){
+    if(letra ==  97){ // inserte letra a para enviar la temperatura
       Serial.print (" Temperatura:");
       Serial.println (t);
     } 
