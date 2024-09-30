@@ -28,7 +28,10 @@ void setup() {
   digitalWrite(13, HIGH);
   Serial.println("termino");
   */
-  EEPROM.write(0,0);
+
+  //soft reset
+  // borrar el length de la contraseña
+  //EEPROM.write(0,0);
   
   pinMode(pin_led,OUTPUT);  //led
   Serial.begin(9600);
@@ -72,10 +75,10 @@ void loop() {
     {
        
       //trying to enter to the system, if succesfull enable a led in "pin_led"
-      if(Serial.available()){
+      if(bt.available()){
         
         delay(50); // for stability purposes
-        incoming_password = Serial.readString();
+        incoming_password = bt.readString();
         
         incoming_password.trim();
         Serial.println("contraseña que viene: " + incoming_password);
