@@ -1,5 +1,5 @@
 #include <SoftwareSerial.h> // Incluimos la librería  SoftwareSerial
-SoftwareSerial BT(10, 11);  // Definimos los pines RX y TX del Arduino conectados al Bluetooth
+SoftwareSerial BT(19, 18);  // Definimos los pines RX y TX del Arduino conectados al Bluetooth
 
 // Adicion codigo de foco
 int pin = 34;
@@ -20,7 +20,7 @@ void loop()
 {
     if (BT.available() > 0) // Si llega un dato por el puerto BT se envía al monitor serial
     {
-        //Serial.write(BT.read());
+        Serial.write("llELGO ALGO");
         letra = BT.read();
         Serial.write(letra);
         
