@@ -24,36 +24,34 @@ void setup() {
 
   // Detener todos los motores al inicio
   stopMotors();
-   Serial.print("iniciando");
+ Serial.print("iniciando");
   
 }
 
 void loop() {
+  // Verificar si hay datos disponibles desde Bluetooth
   if (BT.available()) {
-    char command = BT.read(); // Leer el comando recibido
+    String direccion = BT.readStringUntil('\n'); // Leer la dirección hasta un salto de línea
     
-    if (command == 'F' || command == 'B' || command == 'S') { // Filtrar comandos
-      Serial.print("Llego algo: ");
-      Serial.print(command);
-      
-      switch (command) {
-        case 'F': // Adelante
-          moveForward();
-          break;
-        case 'B': // Atrás
-          moveBackward();
-          break;
-        case 'S': // Detener
-          stopMotors();
-          break;
-        default:
-          stopMotors();
-          break;
-      }
+    Serial.print("Comando recibido: ");
+    Serial.println(direccion); // Mostrar la dirección recibida en el monitor serie
+    
+    // Ejecutar la acción correspondiente a la dirección
+    if (direccion == "arriba") {
+      moveForward();
+    } else if (direccion == "abajo") {
+      moveBackward();
+    } else if (direccion == "izquierda") {
+      turnLeft();
+    } else if (direccion == "derecha") {
+      turnRight();
+    } else if (direccion == "centro") {
+      stopMotors();
+    } else {
+      stopMotors(); // Detener motores si el comando no es reconocido
     }
   }
 }
-
 
 // Función para mover hacia adelante
 void moveForward() {
@@ -83,8 +81,37 @@ void moveBackward() {
   motor4.run(BACKWARD);
 }
 
+// Función para girar a la izquierda
+void turnLeft() {
+  Serial.println("Izquierda");
+  motor1.setSpeed(255);
+  motor2.setSpeed(255);
+  motor3.setSpeed(255);
+  motor4.setSpeed(255);
+
+  motor1.run(BACKWARD);
+  motor2.run(BACKWARD);
+  motor3.run(FORWARD);
+  motor4.run(FORWARD);
+}
+
+// Función para girar a la derecha
+void turnRight() {
+  Serial.println("Derecha");
+  motor1.setSpeed(255);
+  motor2.setSpeed(255);
+  motor3.setSpeed(255);
+  motor4.setSpeed(255);
+
+  motor1.run(FORWARD);
+  motor2.run(FORWARD);
+  motor3.run(BACKWARD);
+  motor4.run(BACKWARD);
+}
+
 // Función para detener los motores
 void stopMotors() {
+  Serial.println("Detener motores");
   motor1.run(RELEASE);
   motor2.run(RELEASE);
   motor3.run(RELEASE);
