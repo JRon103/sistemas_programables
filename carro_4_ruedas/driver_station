@@ -1,0 +1,107 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+import pygame
+import time
+import serial
+import math
+import serial.tools.list_ports
+# Configuración del puerto serial y velocidad de baudios
+puerto_serial = 'COM3'  # Ajusta según tu configuración
+velocidad_baudios = 9600
+
+# Inicializar Pygame y el joystick
+pygame.init()
+pygame.joystick.init()
+
+
+# Obtener una lista de los puertos COM disponibles
+def obtener_puertos_com():
+    puertos = serial.tools.list_ports.comports()
+    return [port.device for port in puertos]
+# Función para intentar la conexión al puerto serial
+def conectar_al_puerto():
+    global ser
+    try:
+        # Mostrar un cuadro de diálogo informando al usuario que se está conectando
+        messagebox.showinfo("Conectando", "Intentando establecer conexión...")
+
+        ser = serial.Serial(puerto_seleccionado.get(), velocidad_baudios)
+        print(f"Conectado al puerto serial: {puerto_seleccionado.get()}")
+        messagebox.showinfo("Conexión exitosa", "Conectado al puerto serial.")
+
+        # Cerrar el cuadro de diálogo automáticamente después de 5 segundos
+        ventana.after(5000, ventana.quit)
+    except serial.SerialException:
+        messagebox.showerror("Error", "No se pudo conectar al puerto serial. Verifica la configuración y vuelve a intentar.")
+
+# Inicializar el primer joystick conectado
+joystick = pygame.joystick.Joystick(0)
+joystick.init()
+print(f"Conectado al joystick: {joystick.get_name()}")
+
+# Crear la ventana principal
+ventana = tk.Tk()
+ventana.title("Driver Station")
+# Crear un combobox para seleccionar el puerto COM
+puertos_disponibles = obtener_puertos_com()
+puerto_seleccionado = tk.StringVar()
+puerto_combobox = ttk.Combobox(ventana, textvariable=puerto_seleccionado, values=puertos_disponibles)
+puerto_combobox.set(puertos_disponibles[0] if puertos_disponibles else "")  # Seleccionar el primer puerto por defecto
+puerto_combobox.pack()
+# Crear un botón para iniciar la conexión
+boton_conectar = tk.Button(ventana, text="Conectar", command=conectar_al_puerto)
+boton_conectar.pack()
+# Crear un canvas para dibujar el círculo y el joystick
+canvas = tk.Canvas(ventana, width=300, height=300, bg='white')
+canvas.pack()
+# Crear un label para mostrar el comando
+label_comando = tk.Label(ventana, text="Comando:")
+label_comando.pack()
+
+# Dibujar el círculo
+centro_x = 150
+centro_y = 150
+radio = 100
+canvas.create_oval(centro_x - radio, centro_y - radio, centro_x + radio, centro_y + radio)
+
+# Función para actualizar la dirección y dibujar el joystick
+def actualizar_joystick():
+    for event in pygame.event.get():
+        if event.type == pygame.JOYAXISMOTION:
+            # Capturar los valores de los ejes
+            eje_x = joystick.get_axis(0)
+            eje_y = joystick.get_axis(1)
+
+            # Normalizar los valores para que queden entre -1 y 1
+            magnitud = math.sqrt(eje_x**2 + eje_y**2)
+            if magnitud > 1:  # Si la magnitud es mayor a 1, normalizar
+                eje_x /= magnitud
+                eje_y /= magnitud
+
+            # Escalar los valores para ajustarlos al círculo
+            x = centro_x + int(eje_x * radio)
+            y = centro_y + int(eje_y * radio)
+
+            # Dibujar el joystick
+            canvas.delete("joystick")
+            canvas.create_oval(x - 5, y - 5, x + 5, y + 5, fill="red", tag="joystick")
+
+            # Determinar la dirección
+            if abs(eje_x) < 0.2 and abs(eje_y) < 0.2:
+                direccion = "Centro"
+            elif abs(eje_x) > abs(eje_y):
+                direccion = "Izquierda" if eje_x < 0 else "Derecha"
+            else:
+                direccion = "Arriba" if eje_y < 0 else "Abajo"
+
+            # Enviar el comando al Arduino y mostrar en la consola
+            #ser.write(direccion.encode())
+            label_comando.config(text=f"Comando: {direccion}")
+
+    # Llamar a la función recursivamente para actualizar continuamente
+    ventana.after(10, actualizar_joystick)
+# Iniciar la actualización del joystick
+actualizar_joystick()
+# Conectar con el HC-05 (utilizando el puerto seleccionado)
+
+ventana.mainloop()
