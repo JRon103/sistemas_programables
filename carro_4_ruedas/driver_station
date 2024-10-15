@@ -1,107 +1,154 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 import pygame
 import time
 import serial
 import math
 import serial.tools.list_ports
-# Configuración del puerto serial y velocidad de baudios
-puerto_serial = 'COM3'  # Ajusta según tu configuración
+import threading
+
+# Configuración de puerto serial y velocidad de baudios
 velocidad_baudios = 9600
+ser = None  # Inicializamos ser como None
+reconectando = False  # Variable para verificar si se está reconectando
+hilo_joystick = None  # Hilo para el joystick
 
 # Inicializar Pygame y el joystick
 pygame.init()
 pygame.joystick.init()
 
-
-# Obtener una lista de los puertos COM disponibles
 def obtener_puertos_com():
     puertos = serial.tools.list_ports.comports()
     return [port.device for port in puertos]
+
+def actualizar_puertos():
+    nuevos_puertos = obtener_puertos_com()
+    puerto_seleccionado.set("")  # Limpiar la selección actual
+    puerto_combobox['values'] = nuevos_puertos  # Actualizar los valores del combobox
+
 # Función para intentar la conexión al puerto serial
 def conectar_al_puerto():
-    global ser
+    global ser, reconectando, hilo_joystick
     try:
-        # Mostrar un cuadro de diálogo informando al usuario que se está conectando
-        messagebox.showinfo("Conectando", "Intentando establecer conexión...")
+        # Si ya hay una conexión activa, ciérrala
+        if ser and ser.is_open:
+            ser.close()
+            print("Puerto cerrado antes de intentar una nueva conexión.")
 
-        ser = serial.Serial(puerto_seleccionado.get(), velocidad_baudios)
+        estado_label.config(text="Conectando...")
+        print(f"Intentando conectarse al puerto {puerto_seleccionado.get()} con baudrate {velocidad_baudios}")
+        ser = serial.Serial(puerto_seleccionado.get(), velocidad_baudios, timeout=2)
         print(f"Conectado al puerto serial: {puerto_seleccionado.get()}")
-        messagebox.showinfo("Conexión exitosa", "Conectado al puerto serial.")
+        estado_label.config(text="Conectado")
+        reconectando = False  # Reiniciar la variable de reconexión
 
-        # Cerrar el cuadro de diálogo automáticamente después de 5 segundos
-        ventana.after(5000, ventana.quit)
-    except serial.SerialException:
-        messagebox.showerror("Error", "No se pudo conectar al puerto serial. Verifica la configuración y vuelve a intentar.")
+        # Si el hilo del joystick está en ejecución, se detiene
+        if hilo_joystick and hilo_joystick.is_alive():
+            hilo_joystick.join()  # Esperar a que el hilo termine
+            print("Hilo del joystick detenido.")
 
-# Inicializar el primer joystick conectado
-joystick = pygame.joystick.Joystick(0)
-joystick.init()
-print(f"Conectado al joystick: {joystick.get_name()}")
+        # Iniciar el manejo del joystick en un hilo separado
+        hilo_joystick = threading.Thread(target=manejar_joystick, daemon=True)
+        hilo_joystick.start()
+
+    except serial.SerialException as e:
+        estado_label.config(text="Error de conexión")
+        print(f"Error de conexión: {str(e)}")
+        reconectando = True  # Indicar que estamos en modo de reconexión
+
+# Función para ejecutar la conexión en un hilo
+def conectar_al_puerto_async():
+    threading.Thread(target=conectar_al_puerto).start()
+
+# Función para manejar la actualización del joystick
+def manejar_joystick():
+    global ser, reconectando
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+    print(f"Conectado al joystick: {joystick.get_name()}")
+
+    while True:
+        if ser and ser.is_open:
+            for event in pygame.event.get():
+                if event.type == pygame.JOYAXISMOTION:
+                    eje_x = joystick.get_axis(0)
+                    eje_y = joystick.get_axis(1)
+
+                    magnitud = math.sqrt(eje_x**2 + eje_y**2)
+                    if magnitud > 1:
+                        eje_x /= magnitud
+                        eje_y /= magnitud
+
+                    x = centro_x + int(eje_x * radio)
+                    y = centro_y + int(eje_y * radio)
+
+                    canvas.delete("joystick")
+                    canvas.create_oval(x - 5, y - 5, x + 5, y + 5, fill="red", tag="joystick")
+
+                    if abs(eje_x) < 0.2 and abs(eje_y) < 0.2:
+                        direccion = "centro"
+                    elif abs(eje_x) > abs(eje_y):
+                        direccion = "izquierda" if eje_x < 0 else "derecha"
+                    else:
+                        direccion = "arriba" if eje_y < 0 else "abajo"
+
+                    direccion += "#"
+                    ser.write(direccion.encode())
+                    label_comando.config(text=f"Comando: {direccion}")
+
+        else:
+            if ser and ser.is_open == False:
+                ser.close()
+                estado_label.config(text="Perdió conexión")
+                print("Conexión cerrada.")
+                ser = None  # Reiniciar ser
+
+                # Intentar reconectar
+                if not reconectando:  # Solo intentamos reconectar si no estamos ya en ese proceso
+                    reconectando = True
+                    while reconectando:  # Mantener el bucle hasta que se reconecte
+                        conectar_al_puerto()  # Intenta conectar
+                        time.sleep(1)  # Esperar antes de intentar de nuevo
+
+        # Esperar un corto periodo antes de la siguiente actualización
+        time.sleep(0.1)
 
 # Crear la ventana principal
 ventana = tk.Tk()
 ventana.title("Driver Station")
+
 # Crear un combobox para seleccionar el puerto COM
 puertos_disponibles = obtener_puertos_com()
 puerto_seleccionado = tk.StringVar()
 puerto_combobox = ttk.Combobox(ventana, textvariable=puerto_seleccionado, values=puertos_disponibles)
-puerto_combobox.set(puertos_disponibles[0] if puertos_disponibles else "")  # Seleccionar el primer puerto por defecto
+puerto_combobox.set(puertos_disponibles[0] if puertos_disponibles else "")
 puerto_combobox.pack()
+
 # Crear un botón para iniciar la conexión
-boton_conectar = tk.Button(ventana, text="Conectar", command=conectar_al_puerto)
+boton_conectar = tk.Button(ventana, text="Conectar", command=conectar_al_puerto_async)
 boton_conectar.pack()
+
+# Crear un botón para actualizar los puertos
+boton_actualizar = tk.Button(ventana, text="Actualizar Puertos", command=actualizar_puertos)
+boton_actualizar.pack()
+
 # Crear un canvas para dibujar el círculo y el joystick
 canvas = tk.Canvas(ventana, width=300, height=300, bg='white')
 canvas.pack()
+
 # Crear un label para mostrar el comando
 label_comando = tk.Label(ventana, text="Comando:")
 label_comando.pack()
+
+# Crear un label para mostrar el estado de conexión
+estado_label = tk.Label(ventana, text="Desconectado")
+estado_label.pack()
 
 # Dibujar el círculo
 centro_x = 150
 centro_y = 150
 radio = 100
-canvas.create_oval(centro_x - radio, centro_y - radio, centro_x + radio, centro_y + radio)
+canvas.create_oval(centro_x - radio, centro_y - radio, centro_y + radio, centro_x + radio)
 
-# Función para actualizar la dirección y dibujar el joystick
-def actualizar_joystick():
-    for event in pygame.event.get():
-        if event.type == pygame.JOYAXISMOTION:
-            # Capturar los valores de los ejes
-            eje_x = joystick.get_axis(0)
-            eje_y = joystick.get_axis(1)
-
-            # Normalizar los valores para que queden entre -1 y 1
-            magnitud = math.sqrt(eje_x**2 + eje_y**2)
-            if magnitud > 1:  # Si la magnitud es mayor a 1, normalizar
-                eje_x /= magnitud
-                eje_y /= magnitud
-
-            # Escalar los valores para ajustarlos al círculo
-            x = centro_x + int(eje_x * radio)
-            y = centro_y + int(eje_y * radio)
-
-            # Dibujar el joystick
-            canvas.delete("joystick")
-            canvas.create_oval(x - 5, y - 5, x + 5, y + 5, fill="red", tag="joystick")
-
-            # Determinar la dirección
-            if abs(eje_x) < 0.2 and abs(eje_y) < 0.2:
-                direccion = "Centro"
-            elif abs(eje_x) > abs(eje_y):
-                direccion = "Izquierda" if eje_x < 0 else "Derecha"
-            else:
-                direccion = "Arriba" if eje_y < 0 else "Abajo"
-
-            # Enviar el comando al Arduino y mostrar en la consola
-            #ser.write(direccion.encode())
-            label_comando.config(text=f"Comando: {direccion}")
-
-    # Llamar a la función recursivamente para actualizar continuamente
-    ventana.after(10, actualizar_joystick)
-# Iniciar la actualización del joystick
-actualizar_joystick()
-# Conectar con el HC-05 (utilizando el puerto seleccionado)
-
+# Iniciar el mainloop de la ventana
 ventana.mainloop()
