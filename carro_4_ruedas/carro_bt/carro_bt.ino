@@ -21,6 +21,32 @@ String comando = "";
 unsigned long tiempoUltimoComando = 0; // Tiempo del último comando recibido
 const unsigned long tiempoLimite = 2000; // Tiempo límite en milisegundos
 
+// Supongamos que recibes un comando en el formato "direccion-valor#"
+void procesarComando(String comando) {
+    int separador = comando.indexOf('-');
+    int fin = comando.indexOf('#');
+    
+    if (separador != -1 && fin != -1) {
+        String direccion = comando.substring(0, separador);
+        String valorStr = comando.substring(separador + 1, fin);
+        
+        float valorDecimal = valorStr.toFloat(); // Convierte a decimal
+        int valorEntero = round(valorDecimal * 255); // Convierte a 0-255
+        
+        // Asegúrate de que el valor esté en el rango permitido
+        if (valorEntero < 0) valorEntero = 0;
+        if (valorEntero > 255) valorEntero = 255;
+
+        // Aquí configura tus motores según la dirección y valor
+        if (direccion == "arriba") {
+            // Configura motor adelante con valorEntero
+        } else if (direccion == "abajo") {
+            // Configura motor atrás con valorEntero
+        }
+    }
+}
+
+
 void setup() {
   // Iniciar comunicación serial
   Serial.begin(9600);
@@ -31,6 +57,8 @@ void setup() {
   Serial.println("Iniciando");
 }
 
+
+
 void loop() {
   // Verificar si hay datos disponibles desde Bluetooth
   while (BT.available()) {
@@ -38,25 +66,51 @@ void loop() {
     if (c == '#') { // El carácter '#' indica el final de un comando
       Serial.print("Comando recibido: ");
       Serial.println(comando); // Mostrar el comando completo recibido
+      comando+="#";
+      //voy a separar el comando del valor, deberia de venir algo asi: arriba-0.5
+      // Separar el comando usando el carácter '-'
+      int separador = comando.indexOf('-');
+      int fin = comando.indexOf('#');
+      int valorEntero=0;
+      if (separador != -1 && fin != -1) {
+          String direccion = comando.substring(0, separador);
+          String valorStr = comando.substring(separador + 1, fin);
+          
+          float valorDecimal = valorStr.toFloat(); // Convierte a decimal
+          int valorEntero = round(valorDecimal * 255); // Convierte a 0-255
+          
+          // Asegúrate de que el valor esté en el rango permitido
+          if (valorEntero < 0) valorEntero = 0;
+          if (valorEntero > 255) valorEntero = 255;
+          
+          Serial.print("valorEntero: ");
+          Serial.println(valorEntero);
+        
+        
+         
+          // Ejecutar la acción correspondiente al comando recibido
+          if (direccion == "arriba") {
+            moveForward(valorEntero);
+          } else if (direccion == "abajo") {
+            moveBackward(valorEntero);
+          } else if (direccion == "izquierda") {
+            turnLeft(valorEntero);
+          } else if (direccion == "derecha") {
+            turnRight(valorEntero);
+          } else if (direccion == "centro") {
+            stopMotors();
+          }
+    
+          // Actualizar el tiempo del último comando recibido
+          tiempoUltimoComando = millis();
+          
+          // Limpiar el buffer de comando para recibir el siguiente
+          direccion = "";
+          comando="";
 
-      // Ejecutar la acción correspondiente al comando recibido
-      if (comando == "arriba") {
-        moveForward();
-      } else if (comando == "abajo") {
-        moveBackward();
-      } else if (comando == "izquierda") {
-        turnLeft();
-      } else if (comando == "derecha") {
-        turnRight();
-      } else if (comando == "centro") {
-        stopMotors();
+          
       }
-
-      // Actualizar el tiempo del último comando recibido
-      tiempoUltimoComando = millis();
       
-      // Limpiar el buffer de comando para recibir el siguiente
-      comando = "";
     } else {
       comando += c; // Agregar el carácter al comando actual
     }
@@ -85,13 +139,13 @@ void controlarMotor(AF_DCMotor &motor, bool invertido, int accion) {
 }
 
 // Función para mover hacia adelante
-void moveForward() {
+void moveForward(int valorEntero) {
   Serial.println("Adelante");
   
-  motor1.setSpeed(255);
-  motor2.setSpeed(255);
-  motor3.setSpeed(255);
-  motor4.setSpeed(255);
+  motor1.setSpeed(valorEntero);
+  motor2.setSpeed(valorEntero);
+  motor3.setSpeed(valorEntero);
+  motor4.setSpeed(valorEntero);
 
   controlarMotor(motor1, invertidoMotor1, FORWARD);
   controlarMotor(motor2, invertidoMotor2, FORWARD);
@@ -100,13 +154,13 @@ void moveForward() {
 }
 
 // Función para mover hacia atrás
-void moveBackward() {
+void moveBackward(int valorEntero) {
   Serial.println("Atrás");
   
-  motor1.setSpeed(255);
-  motor2.setSpeed(255);
-  motor3.setSpeed(255);
-  motor4.setSpeed(255);
+  motor1.setSpeed(valorEntero);
+  motor2.setSpeed(valorEntero);
+  motor3.setSpeed(valorEntero);
+  motor4.setSpeed(valorEntero);
 
   controlarMotor(motor1, invertidoMotor1, BACKWARD);
   controlarMotor(motor2, invertidoMotor2, BACKWARD);
@@ -115,13 +169,13 @@ void moveBackward() {
 }
 
 // Función para girar a la izquierda
-void turnLeft() {
+void turnLeft(int valorEntero) {
   Serial.println("Izquierda");
   
-  motor1.setSpeed(255);
-  motor2.setSpeed(255);
-  motor3.setSpeed(255);
-  motor4.setSpeed(255);
+  motor1.setSpeed(valorEntero);
+  motor2.setSpeed(valorEntero);
+  motor3.setSpeed(valorEntero);
+  motor4.setSpeed(valorEntero);
 
   controlarMotor(motor1, invertidoMotor1, BACKWARD);
   controlarMotor(motor2, invertidoMotor2, FORWARD);
@@ -130,13 +184,13 @@ void turnLeft() {
 }
 
 // Función para girar a la derecha
-void turnRight() {
+void turnRight(int valorEntero) {
   Serial.println("Derecha");
   
-  motor1.setSpeed(255);
-  motor2.setSpeed(255);
-  motor3.setSpeed(255);
-  motor4.setSpeed(255);
+  motor1.setSpeed(valorEntero);
+  motor2.setSpeed(valorEntero);
+  motor3.setSpeed(valorEntero);
+  motor4.setSpeed(valorEntero);
 
   controlarMotor(motor1, invertidoMotor1, FORWARD);
   controlarMotor(motor2, invertidoMotor2, BACKWARD);

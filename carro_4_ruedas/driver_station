@@ -71,6 +71,7 @@ def manejar_joystick():
         if ser and ser.is_open:
             for event in pygame.event.get():
                 if event.type == pygame.JOYAXISMOTION:
+                    valor = 0
                     eje_x = joystick.get_axis(0)
                     eje_y = joystick.get_axis(1)
 
@@ -89,9 +90,19 @@ def manejar_joystick():
                         direccion = "centro"
                     elif abs(eje_x) > abs(eje_y):
                         direccion = "izquierda" if eje_x < 0 else "derecha"
+                        valor=eje_x
                     else:
                         direccion = "arriba" if eje_y < 0 else "abajo"
-
+                        valor=eje_y
+                    
+                    #direccion += "#"
+                    #ser.write(direccion.encode())
+                    direccion+="-"
+                    
+                    # Using the % operator to round to 2 decimal places
+                    formatted_number = "%.2f" % abs(valor)
+                    direccion+=formatted_number
+                    print(formatted_number)
                     direccion += "#"
                     ser.write(direccion.encode())
                     label_comando.config(text=f"Comando: {direccion}")
@@ -111,7 +122,7 @@ def manejar_joystick():
                         time.sleep(1)  # Esperar antes de intentar de nuevo
 
         # Esperar un corto periodo antes de la siguiente actualización
-        time.sleep(0.1)
+        time.sleep(0.05)
 
 # Crear la ventana principal
 ventana = tk.Tk()
