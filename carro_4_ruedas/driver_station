@@ -87,12 +87,12 @@ def manejar_joystick():
                     canvas.create_oval(x - 5, y - 5, x + 5, y + 5, fill="red", tag="joystick")
 
                     if abs(eje_x) < 0.2 and abs(eje_y) < 0.2:
-                        direccion = "centro"
+                        direccion = "c"
                     elif abs(eje_x) > abs(eje_y):
-                        direccion = "izquierda" if eje_x < 0 else "derecha"
+                        direccion = "a" if eje_x < 0 else "d"
                         valor=eje_x
                     else:
-                        direccion = "arriba" if eje_y < 0 else "abajo"
+                        direccion = "w" if eje_y < 0 else "s"
                         valor=eje_y
                     
                     #direccion += "#"
@@ -122,7 +122,7 @@ def manejar_joystick():
                         time.sleep(1)  # Esperar antes de intentar de nuevo
 
         # Esperar un corto periodo antes de la siguiente actualización
-        time.sleep(0.05)
+        time.sleep(0.150)
 
 # Crear la ventana principal
 ventana = tk.Tk()

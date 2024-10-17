@@ -21,48 +21,28 @@ String comando = "";
 unsigned long tiempoUltimoComando = 0; // Tiempo del último comando recibido
 const unsigned long tiempoLimite = 2000; // Tiempo límite en milisegundos
 
-// Supongamos que recibes un comando en el formato "direccion-valor#"
-void procesarComando(String comando) {
-    int separador = comando.indexOf('-');
-    int fin = comando.indexOf('#');
-    
-    if (separador != -1 && fin != -1) {
-        String direccion = comando.substring(0, separador);
-        String valorStr = comando.substring(separador + 1, fin);
-        
-        float valorDecimal = valorStr.toFloat(); // Convierte a decimal
-        int valorEntero = round(valorDecimal * 255); // Convierte a 0-255
-        
-        // Asegúrate de que el valor esté en el rango permitido
-        if (valorEntero < 0) valorEntero = 0;
-        if (valorEntero > 255) valorEntero = 255;
-
-        // Aquí configura tus motores según la dirección y valor
-        if (direccion == "arriba") {
-            // Configura motor adelante con valorEntero
-        } else if (direccion == "abajo") {
-            // Configura motor atrás con valorEntero
-        }
-    }
-}
-
-
 void setup() {
   // Iniciar comunicación serial
   Serial.begin(9600);
+  delay(500);
   BT.begin(9600);
-
+delay(500);
   // Detener todos los motores al inicio
   stopMotors();
   Serial.println("Iniciando");
 }
-
+void limpiarBuffer() {
+  while (BT.available()) {
+    BT.read(); // Leer y descartar el contenido del buffer
+  }
+}
 
 
 void loop() {
   // Verificar si hay datos disponibles desde Bluetooth
-  while (BT.available()) {
+  while (BT.available()>7) {//porque son 7 caracteres en nuestra transmision c-1.00#
     char c = BT.read(); // Leer un byte del Bluetooth
+    delay(10);
     if (c == '#') { // El carácter '#' indica el final de un comando
       Serial.print("Comando recibido: ");
       Serial.println(comando); // Mostrar el comando completo recibido
@@ -83,26 +63,30 @@ void loop() {
           if (valorEntero < 0) valorEntero = 0;
           if (valorEntero > 255) valorEntero = 255;
           
-          Serial.print("valorEntero: ");
+         /* Serial.print("valorEntero: ");
           Serial.println(valorEntero);
-        
+        */
         
          
           // Ejecutar la acción correspondiente al comando recibido
-          if (direccion == "arriba") {
+          //cambiar por wasd por simpleza de caracter
+          //centro es c
+          if (direccion == "w") {
             moveForward(valorEntero);
-          } else if (direccion == "abajo") {
+          } else if (direccion == "s") {
             moveBackward(valorEntero);
-          } else if (direccion == "izquierda") {
+          } else if (direccion == "a") {
             turnLeft(valorEntero);
-          } else if (direccion == "derecha") {
+          } else if (direccion == "d") {
             turnRight(valorEntero);
-          } else if (direccion == "centro") {
+          } else if (direccion == "c") {
             stopMotors();
-          }
-    
+          }else{
+           limpiarBuffer(); 
+            }
+          
           // Actualizar el tiempo del último comando recibido
-          tiempoUltimoComando = millis();
+         tiempoUltimoComando = millis();
           
           // Limpiar el buffer de comando para recibir el siguiente
           direccion = "";
@@ -114,13 +98,14 @@ void loop() {
     } else {
       comando += c; // Agregar el carácter al comando actual
     }
+    //delay(100);
   }
 
   // Verificar si ha pasado el tiempo límite desde el último comando
-  if (millis() - tiempoUltimoComando > tiempoLimite) {
+  /*if (millis() - tiempoUltimoComando > tiempoLimite) {
     Serial.println("Conexión Bluetooth perdida. Deteniendo motores.");
     stopMotors(); // Detener los motores si no se recibe comando
-  }
+  }*/
 }
 
 // Función para controlar la dirección de los motores considerando si están invertidos
