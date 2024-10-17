@@ -10,44 +10,82 @@ AF_DCMotor motor4(4); // Frontal izquierdo
 // Configuración de pines para el módulo Bluetooth
 SoftwareSerial BT(50, 52); // RX, TX
 
+// Pines del sensor ultrasónico
+const int trigPin = 46 ; //cable amarillo
+const int echoPin = 48; //cable verde
+
+const int buzzerPin =22; // Pin donde está conectado el buzzer
+
+
 // Variables para definir si un motor está invertido
-bool invertidoMotor1 = false;  // Motor trasero izquierdo
-bool invertidoMotor2 = false;  // Motor trasero derecho
-bool invertidoMotor3 = true; // Motor frontal derecho
-bool invertidoMotor4 = true; // Motor frontal izquierdo
+bool invertidoMotor1 = false;
+bool invertidoMotor2 = false;
+bool invertidoMotor3 = true;
+bool invertidoMotor4 = true;
 
 // Buffer para almacenar el comando recibido
 String comando = "";
-unsigned long tiempoUltimoComando = 0; // Tiempo del último comando recibido
-const unsigned long tiempoLimite = 2000; // Tiempo límite en milisegundos
+
+unsigned long tiempoUltimoComando = 0;
+const unsigned long tiempoLimite = 2000; 
 
 void setup() {
-  // Iniciar comunicación serial
+  // Inicializar los pines del sensor ultrasónico
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(buzzerPin, OUTPUT); // Configurar el pin del buzzer como salida
+
   Serial.begin(9600);
   delay(500);
   BT.begin(9600);
-delay(500);
+  //delay(500);
   // Detener todos los motores al inicio
   stopMotors();
-  Serial.println("Iniciando");
+  Serial.println("Inicia");
 }
+
+//funciones de utilidad
 void limpiarBuffer() {
   while (BT.available()) {
     BT.read(); // Leer y descartar el contenido del buffer
   }
 }
 
+long medirDistancia() {
+  // Enviar pulso de trigger
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  // Leer la duración del pulso de echo
+  long duracion = pulseIn(echoPin, HIGH);
+  
+  // Calcular la distancia en cm (velocidad del sonido: 343 m/s o 29.1 microsegundos por cm)
+  long distancia = duracion * 0.0343 / 2; 
+  
+  return distancia;
+}
+
+void playTone(int frequency, int duration) {
+    tone(buzzerPin, frequency, duration); // Emitir tono
+    delay(duration); // Esperar el tiempo del tono
+    noTone(buzzerPin); // Detener el tono
+}
 
 void loop() {
+   // Imprimir la distancia medida por el sensor ultrasónico
+  long distancia = 0; 
   // Verificar si hay datos disponibles desde Bluetooth
-  while (BT.available()>7) {//porque son 7 caracteres en nuestra transmision c-1.00#
-    char c = BT.read(); // Leer un byte del Bluetooth
+  while (BT.available()) {//porque son 7 caracteres en nuestra transmision c-1.00#
+    char c = BT.read(); 
     delay(10);
     if (c == '#') { // El carácter '#' indica el final de un comando
-      Serial.print("Comando recibido: ");
-      Serial.println(comando); // Mostrar el comando completo recibido
+      //Serial.print("Comando recibido: ");
+      Serial.println(comando); 
       comando+="#";
-      //voy a separar el comando del valor, deberia de venir algo asi: arriba-0.5
+      //voy a separar el comando del valor, deberia de venir algo asi: w-0.5
       // Separar el comando usando el carácter '-'
       int separador = comando.indexOf('-');
       int fin = comando.indexOf('#');
@@ -59,35 +97,45 @@ void loop() {
           float valorDecimal = valorStr.toFloat(); // Convierte a decimal
           int valorEntero = round(valorDecimal * 255); // Convierte a 0-255
           
-          // Asegúrate de que el valor esté en el rango permitido
+          // checando que el valor este en el rango permitido
           if (valorEntero < 0) valorEntero = 0;
           if (valorEntero > 255) valorEntero = 255;
          
           // Ejecutar la acción correspondiente al comando recibido
           //cambiar por wasd por simpleza de caracter
           //centro es c
-          if (direccion == "w") {
-            moveForward(valorEntero);
-          } else if (direccion == "s") {
-            moveBackward(valorEntero);
-          } else if (direccion == "a") {
-            turnLeft(valorEntero);
-          } else if (direccion == "d") {
-            turnRight(valorEntero);
-          } else if (direccion == "c") {
-            stopMotors();
-          }else{
-           limpiarBuffer(); 
+          distancia = medirDistancia();
+         /* Serial.print("Distancia: ");
+          Serial.print(distancia);
+          Serial.println(" cm");
+         */   
+          if(distancia>10){
+            if (distancia< 18){
+              valorEntero=round(valorEntero*.50);
             }
-          
+           if (direccion == "w") {
+              moveForward(valorEntero);
+            } else if (direccion == "s") {
+              moveBackward(valorEntero);
+            } else if (direccion == "a") {
+              turnLeft(valorEntero);
+            } else if (direccion == "d") {
+              turnRight(valorEntero);
+            } else if (direccion == "c") {
+              stopMotors();
+            }else{//llego un comando incompleto o roto, lo ignoramos y limpiamos
+             limpiarBuffer(); 
+            }
+          }else{
+            stopMotors();
+            playTone(523, 100); // Nota C (Do) - Octava alta
+          }
           // Actualizar el tiempo del último comando recibido
          tiempoUltimoComando = millis();
           
           // Limpiar el buffer de comando para recibir el siguiente
           direccion = "";
-          comando="";
-
-          
+          comando="";   
       }
       
     } else {
@@ -97,13 +145,14 @@ void loop() {
   }
 
   // Verificar si ha pasado el tiempo límite desde el último comando
-  /*if (millis() - tiempoUltimoComando > tiempoLimite) {
-    Serial.println("Conexión Bluetooth perdida. Deteniendo motores.");
+  if (millis() - tiempoUltimoComando > tiempoLimite) {
+   // Serial.println("Conexión Bluetooth perdida. Deteniendo motores.");
     stopMotors(); // Detener los motores si no se recibe comando
-  }*/
-}
+  }
+  delay(100);
+  }
 
-// Función para controlar la dirección de los motores considerando si están invertidos
+// Función para controlar la dirección de los motores por si estan invertidos
 void controlarMotor(AF_DCMotor &motor, bool invertido, int accion) {
   if (invertido) {
     if (accion == FORWARD) {
@@ -118,7 +167,6 @@ void controlarMotor(AF_DCMotor &motor, bool invertido, int accion) {
   }
 }
 
-// Función para mover hacia adelante
 void moveForward(int valorEntero) {
   Serial.println("Adelante");
   
@@ -133,9 +181,8 @@ void moveForward(int valorEntero) {
   controlarMotor(motor4, invertidoMotor4, FORWARD);
 }
 
-// Función para mover hacia atrás
 void moveBackward(int valorEntero) {
-  Serial.println("Atrás");
+  //Serial.println("Atrás");
   
   motor1.setSpeed(valorEntero);
   motor2.setSpeed(valorEntero);
@@ -148,9 +195,8 @@ void moveBackward(int valorEntero) {
   controlarMotor(motor4, invertidoMotor4, BACKWARD);
 }
 
-// Función para girar a la izquierda
 void turnLeft(int valorEntero) {
-  Serial.println("Izquierda");
+  //Serial.println("Izquierda");
   
   motor1.setSpeed(valorEntero);
   motor2.setSpeed(valorEntero);
@@ -163,9 +209,8 @@ void turnLeft(int valorEntero) {
   controlarMotor(motor4, invertidoMotor4, BACKWARD);
 }
 
-// Función para girar a la derecha
 void turnRight(int valorEntero) {
-  Serial.println("Derecha");
+  //Serial.println("Derecha");
   
   motor1.setSpeed(valorEntero);
   motor2.setSpeed(valorEntero);
@@ -178,9 +223,8 @@ void turnRight(int valorEntero) {
   controlarMotor(motor4, invertidoMotor4, FORWARD);
 }
 
-// Función para detener los motores
 void stopMotors() {
-  Serial.println("Detener motores");
+  //Serial.println("Detener motores");
 
   motor1.run(RELEASE);
   motor2.run(RELEASE);

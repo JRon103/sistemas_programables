@@ -1,5 +1,6 @@
 import pygame
 import serial
+import time
 
 # Inicializar Pygame y el joystick
 pygame.init()
@@ -26,27 +27,28 @@ while True:
             valor = 0
             # Determinar la dirección en base a los valores del joystick
             if eje_y < -0.5:
-                direccion = "arriba"
+                direccion = "w"
                 valor=eje_y
             elif eje_y > 0.5:
-                direccion = "abajo"
+                direccion = "s"
                 valor=eje_y
             elif eje_x < -0.5:
-                direccion = "izquierda"
+                direccion = "a"
                 valor=eje_x
             elif eje_x > 0.5:
-                direccion = "derecha"
+                direccion = "d"
+                valor=eje_x
             else:
-                direccion = "centro"
+                direccion = "c"
                 valor=eje_x
                 
             # Imprimir dirección en la consola para depuración
             print(f"{con} Direccion: {direccion}, Eje X: {eje_x:.2f}, Eje Y: {eje_y:.2f}")
 
             # Enviar el comando correspondiente al Arduino
-            ser.write(direccion.encode())
+            #ser.write(direccion.encode())
             
-            """
+            
             direccion+="-"
             
             # Using the % operator to round to 2 decimal places
@@ -55,5 +57,6 @@ while True:
             print(formatted_number)
             direccion += "#"
             ser.write(direccion.encode())
-            """
+            time.sleep(0.300)
+            
             
