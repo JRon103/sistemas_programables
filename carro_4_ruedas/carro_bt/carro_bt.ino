@@ -62,11 +62,6 @@ void loop() {
           // Asegúrate de que el valor esté en el rango permitido
           if (valorEntero < 0) valorEntero = 0;
           if (valorEntero > 255) valorEntero = 255;
-          
-         /* Serial.print("valorEntero: ");
-          Serial.println(valorEntero);
-        */
-        
          
           // Ejecutar la acción correspondiente al comando recibido
           //cambiar por wasd por simpleza de caracter
