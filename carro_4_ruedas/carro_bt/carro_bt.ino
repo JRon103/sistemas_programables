@@ -105,11 +105,11 @@ void loop() {
           //cambiar por wasd por simpleza de caracter
           //centro es c
           distancia = medirDistancia();
-         /* Serial.print("Distancia: ");
+          Serial.print("Distancia: ");
           Serial.print(distancia);
           Serial.println(" cm");
-         */   
-          if(distancia>10){
+            
+          if(distancia>10 || distancia <=2){
             if (distancia< 18){
               valorEntero=round(valorEntero*.50);
             }
@@ -127,7 +127,7 @@ void loop() {
              limpiarBuffer(); 
             }
           }else{
-            stopMotors();
+            //stopMotors();
             playTone(523, 100); // Nota C (Do) - Octava alta
           }
           // Actualizar el tiempo del último comando recibido

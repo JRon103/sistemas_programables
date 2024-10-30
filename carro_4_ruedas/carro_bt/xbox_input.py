@@ -57,6 +57,6 @@ while True:
             print(formatted_number)
             direccion += "#"
             ser.write(direccion.encode())
-            time.sleep(0.300)
+            time.sleep(0.150)
             
             
