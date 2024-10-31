@@ -5,11 +5,11 @@
 bool bandera = false;
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
-IPAddress server(34, 41, 255, 104);  // Dirección IP del servidor MySQL en la nube
+IPAddress server(34, 41, 255, 104);  // Dirección IP del servidor MySQL en la nubev
 
 char usuario[] = "root";
 char pass[] = "carrito";
-char db_name[] = "bd_carrito";  // Reemplaza con el nombre de tu base de datos
+char db_name[] = "bd_carrito"; 
 
 char INSERT_SQL[] = "INSERT INTO temperaturas(temperatura, lugar) VALUES(43.1, '19M')";
 
@@ -22,7 +22,7 @@ void setup() {
     Serial.println("Fallo al obtener una IP mediante DHCP");
     while (true);  // Detiene el programa si no obtiene una IP
   }
-  
+  Serial.print(Ethernet.localIP());
   Serial.println("Conectando...");
   if (conn.connect(server, 3306, usuario, pass)) {
     delay(1000);
