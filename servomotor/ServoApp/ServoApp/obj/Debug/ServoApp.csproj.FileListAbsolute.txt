@@ -1,0 +1,20 @@
+C:\Users\pau_c\source\repos\ServoApp\ServoApp\bin\Debug\ServoApp.exe.config
+C:\Users\pau_c\source\repos\ServoApp\ServoApp\bin\Debug\ServoApp.exe
+C:\Users\pau_c\source\repos\ServoApp\ServoApp\bin\Debug\ServoApp.pdb
+C:\Users\pau_c\source\repos\ServoApp\ServoApp\obj\Debug\ServoApp.csproj.AssemblyReference.cache
+C:\Users\pau_c\source\repos\ServoApp\ServoApp\obj\Debug\ServoApp.Form1.resources
+C:\Users\pau_c\source\repos\ServoApp\ServoApp\obj\Debug\ServoApp.Properties.Resources.resources
+C:\Users\pau_c\source\repos\ServoApp\ServoApp\obj\Debug\ServoApp.csproj.GenerateResource.cache
+C:\Users\pau_c\source\repos\ServoApp\ServoApp\obj\Debug\ServoApp.csproj.CoreCompileInputs.cache
+C:\Users\pau_c\source\repos\ServoApp\ServoApp\obj\Debug\ServoApp.exe
+C:\Users\pau_c\source\repos\ServoApp\ServoApp\obj\Debug\ServoApp.pdb
+C:\Users\villa\OneDrive\Desktop\TEC_laguna\9no semestre\Sistemas programables\servomotor\ServoApp\ServoApp\bin\Debug\ServoApp.exe.config
+C:\Users\villa\OneDrive\Desktop\TEC_laguna\9no semestre\Sistemas programables\servomotor\ServoApp\ServoApp\bin\Debug\ServoApp.exe
+C:\Users\villa\OneDrive\Desktop\TEC_laguna\9no semestre\Sistemas programables\servomotor\ServoApp\ServoApp\bin\Debug\ServoApp.pdb
+C:\Users\villa\OneDrive\Desktop\TEC_laguna\9no semestre\Sistemas programables\servomotor\ServoApp\ServoApp\obj\Debug\ServoApp.csproj.AssemblyReference.cache
+C:\Users\villa\OneDrive\Desktop\TEC_laguna\9no semestre\Sistemas programables\servomotor\ServoApp\ServoApp\obj\Debug\ServoApp.Form1.resources
+C:\Users\villa\OneDrive\Desktop\TEC_laguna\9no semestre\Sistemas programables\servomotor\ServoApp\ServoApp\obj\Debug\ServoApp.Properties.Resources.resources
+C:\Users\villa\OneDrive\Desktop\TEC_laguna\9no semestre\Sistemas programables\servomotor\ServoApp\ServoApp\obj\Debug\ServoApp.csproj.GenerateResource.cache
+C:\Users\villa\OneDrive\Desktop\TEC_laguna\9no semestre\Sistemas programables\servomotor\ServoApp\ServoApp\obj\Debug\ServoApp.csproj.CoreCompileInputs.cache
+C:\Users\villa\OneDrive\Desktop\TEC_laguna\9no semestre\Sistemas programables\servomotor\ServoApp\ServoApp\obj\Debug\ServoApp.exe
+C:\Users\villa\OneDrive\Desktop\TEC_laguna\9no semestre\Sistemas programables\servomotor\ServoApp\ServoApp\obj\Debug\ServoApp.pdb
