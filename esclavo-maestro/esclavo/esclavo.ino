@@ -1,5 +1,5 @@
 #include <Wire.h>
-int pinSalida=13;
+int pinSalida=2;
 void setup() {
   // put your setup code here, to run once:
   Wire.begin(1);
