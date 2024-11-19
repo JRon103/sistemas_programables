@@ -6,7 +6,7 @@ const int SEMAFORO_XOCHI_ARRIBA = 8; // ID: 3
 const int SEMAFORO_XOCHI_ABAJO = 10; // ID: 4
 
 void setup() {
-  Wire.begin(); // Inicia I2C como maestro
+  Wire.begin(); 
   Serial.begin(9600);
   Serial.println("Inicio del control de semáforos");
 }
@@ -36,7 +36,7 @@ void establecerEnRojo(int semaforo1, int semaforo2) {
   enviarComando(semaforo2, 3); // Rojo
   delay(500); // Pequeña pausa para asegurar la transición
 }
-
+9
 void manejarSemaforoVuelta(int semaforo1, int semaforo2) {
   // Verde sólido para vueltas
   enviarComando(semaforo1, 5); // Verde vuelta
