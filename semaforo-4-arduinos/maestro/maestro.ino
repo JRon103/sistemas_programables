@@ -24,7 +24,8 @@ void loop() {
   establecerEnRojo(SEMAFORO_JUAREZ_DERECHA, SEMAFORO_JUAREZ_IZQUIERDA);
 
   // Rutina: Recto de Xochi
-  manejarSemaforo(SEMAFORO_XOCHI_ARRIBA, SEMAFORO_XOCHI_ABAJO);
+  manejarSemaforo(SEMAFORO_XOCHI_ARRIBA);
+  manejarSemaforo(SEMAFORO_XOCHI_ABAJO);
 
   // Asegurarse de que vuelvan a rojo
   establecerEnRojo(SEMAFORO_XOCHI_ARRIBA, SEMAFORO_XOCHI_ABAJO);
@@ -36,7 +37,6 @@ void establecerEnRojo(int semaforo1, int semaforo2) {
   enviarComando(semaforo2, 3); // Rojo
   delay(500); // Pequeña pausa para asegurar la transición
 }
-9
 void manejarSemaforoVuelta(int semaforo1, int semaforo2) {
   // Verde sólido para vueltas
   enviarComando(semaforo1, 5); // Verde vuelta
@@ -87,6 +87,26 @@ void manejarSemaforo(int semaforo1, int semaforo2) {
   // Rojo
   enviarComando(semaforo1, 3); // Rojo
   enviarComando(semaforo2, 3); // Rojo
+}
+void manejarSemaforo(int semaforo1) {
+  // Verde sólido
+  enviarComando(semaforo1, 2); // Verde
+  delay(2000);
+
+  // Verde parpadeando
+  for (int i = 0; i < 4; i++) {
+    enviarComando(semaforo1, 2); // Verde
+    delay(250);
+    enviarComando(semaforo1, 10); // Apagar
+    delay(250);
+  }
+
+  // Amarillo
+  enviarComando(semaforo1, 4); // Amarillo
+  delay(2000);
+
+  // Rojo
+  enviarComando(semaforo1, 3); // Rojo
 }
 
 void enviarComando(int slaveAddress, int command) {
