@@ -1,5 +1,6 @@
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Box, Paper } from '@mui/material';
+import CreateButton from './CreateButton';
 
 const mockDataRows = [
     { id: 1, cardNumber: 'FJREIOFJ3' },
@@ -9,7 +10,7 @@ const mockDataRows = [
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 100, headerAlign: 'center', align: 'center' },
-    { field: 'cardNumber', headerName: 'Card Number', width: 200, headerAlign: 'center', align: 'center' },
+    { field: 'cardNumber', headerName: 'Card Number', width: 550, headerAlign: 'center', align: 'center' },
     {
         field: 'updateOption',
         headerName: '',
@@ -37,7 +38,8 @@ export default function DataTable() {
                 alignItems: 'center',
             }}
         >
-            <Paper sx={{ height: 400, width: 'auto' }}>
+            <Paper sx={{ height: 400, width: '60%' }}>
+                <CreateButton/>
                 <DataGrid
                     rows={mockDataRows}
                     columns={columns}
