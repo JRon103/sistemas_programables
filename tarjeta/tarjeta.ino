@@ -2,13 +2,6 @@
 #include <SPI.h>
 #include <Wiegand.h>
 
-// Configuración de Ethernet
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; // Dirección MAC
-IPAddress ip(192, 168, 1, 177);                      // IP del Arduino
-IPAddress server(34, 44, 90, 188);                   // IP de la API
-
-EthernetClient client;
-
 // Configuración de Wiegand
 WIEGAND wg;
 #define WIEGAND_D0 2  // Pin D0 del lector
@@ -17,9 +10,20 @@ WIEGAND wg;
 // Configuración del relay
 #define RELAY_PIN 8   // Pin del relay
 
+EthernetClient client;
+
 void setup() {
   Serial.begin(9600);
-  Ethernet.begin(mac, ip);
+
+  // Inicializar Ethernet con DHCP
+  if (Ethernet.begin() == 0) {
+    Serial.println("Error obteniendo IP por DHCP");
+    while (true); // Detener ejecución si falla DHCP
+  }
+
+  // Mostrar la IP asignada
+  Serial.print("Dirección IP obtenida: ");
+  Serial.println(Ethernet.localIP());
 
   // Configurar pines
   pinMode(RELAY_PIN, OUTPUT);
@@ -49,7 +53,7 @@ void loop() {
 
 // Función para enviar los datos a la API
 bool enviarDatosAPI(String tarjetaHex) {
-  if (client.connect(server, 80)) {
+  if (client.connect("34.44.90.188", 80)) { // Usar el hostname o IP de la API
     Serial.println("Conectado al servidor");
     
     // Crear la solicitud POST
