@@ -1,68 +1,90 @@
-#include <SPI.h>
 #include <Ethernet.h>
+#include <SPI.h>
+#include <Wiegand.h>
 
-// Configuración Ethernet
+// Configuración de Ethernet
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; // Dirección MAC
-IPAddress server(34, 41, 255, 104); // Dirección IP del servidor
-EthernetClient cliente;
+IPAddress ip(192, 168, 1, 177);                      // IP del Arduino
+IPAddress server(34, 44, 90, 188);                   // IP de la API
+
+EthernetClient client;
+
+// Configuración de Wiegand
+WIEGAND wg;
+#define WIEGAND_D0 2  // Pin D0 del lector
+#define WIEGAND_D1 3  // Pin D1 del lector
+
+// Configuración del relay
+#define RELAY_PIN 8   // Pin del relay
 
 void setup() {
   Serial.begin(9600);
+  Ethernet.begin(mac, ip);
 
-  // Configurar Ethernet
-  if (Ethernet.begin(mac) == 0) {
-    Serial.println("Error al obtener una IP mediante DHCP.");
-    while (true); // Detener si falla DHCP
-  }
+  // Configurar pines
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW); // Apagar relay al inicio
 
-  Serial.println("Conexión Ethernet exitosa.");
-  Serial.print("Dirección IP local: ");
-  Serial.println(Ethernet.localIP());
+  // Iniciar Wiegand
+  wg.begin(WIEGAND_D0, WIEGAND_D1);
+  Serial.println("Sistema iniciado y esperando tarjetas...");
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    String hexValue = Serial.readStringUntil('\n'); // Leer el valor hexadecimal desde la consola
-    hexValue.trim(); // Eliminar espacios en blanco
-
-    if (hexValue.length() > 0) {
-      Serial.print("Valor recibido: ");
-      Serial.println(hexValue);
-
-      // Construir la petición POST
-      if (cliente.connect(server, 80)) {
-        Serial.println("Conectado al servidor.");
-
-        // Crear el cuerpo de la petición POST
-        String postData = "valor_hex=" + hexValue;
-
-        // Enviar cabeceras y cuerpo de la petición
-        cliente.println("POST /api/tarjeta HTTP/1.1");
-        cliente.println("Host: 34.41.255.104");
-        cliente.println("Content-Type: application/x-www-form-urlencoded");
-        cliente.print("Content-Length: ");
-        cliente.println(postData.length());
-        cliente.println(); // Línea vacía para indicar fin de cabeceras
-        cliente.println(postData);
-
-        Serial.println("Petición enviada.");
-      } else {
-        Serial.println("Error al conectar al servidor.");
-      }
-
-      // Leer y mostrar la respuesta del servidor
-      while (cliente.connected()) {
-        if (cliente.available()) {
-          char c = cliente.read();
-          Serial.print(c);
-        }
-      }
-
-      // Finalizar la conexión
-      cliente.stop();
-      Serial.println("\nConexión cerrada.");
+  // Verificar lectura de la tarjeta
+  if (wg.available()) {
+    uint32_t cardData = wg.getCode();
+    Serial.print("Tarjeta leída: ");
+    Serial.println(cardData, HEX); // Mostrar en formato hexadecimal
+    
+    // Enviar datos a la API
+    if (enviarDatosAPI(String(cardData, HEX))) {
+      Serial.println("Acceso permitido, activando relay...");
+      activarRelay();
     } else {
-      Serial.println("Valor vacío. Intenta nuevamente.");
+      Serial.println("Acceso denegado.");
     }
   }
+}
+
+// Función para enviar los datos a la API
+bool enviarDatosAPI(String tarjetaHex) {
+  if (client.connect(server, 80)) {
+    Serial.println("Conectado al servidor");
+    
+    // Crear la solicitud POST
+    String postData = "{\"card\":\"" + tarjetaHex + "\"}"; // JSON con datos de la tarjeta
+    client.println("POST /endpoint HTTP/1.1"); // Cambiar "/endpoint" al nombre correcto
+    client.println("Host: 34.44.90.188");
+    client.println("Content-Type: application/json");
+    client.print("Content-Length: ");
+    client.println(postData.length());
+    client.println();
+    client.println(postData);
+
+    // Leer la respuesta
+    while (client.connected()) {
+      if (client.available()) {
+        String line = client.readStringUntil('\n');
+        Serial.println("Respuesta: " + line);
+
+        // Buscar palabra "success" en la respuesta
+        if (line.indexOf("success") != -1) {
+          client.stop();
+          return true; // Acceso permitido
+        }
+      }
+    }
+    client.stop();
+  } else {
+    Serial.println("Error conectando al servidor");
+  }
+  return false; // Acceso denegado
+}
+
+// Función para activar el relay
+void activarRelay() {
+  digitalWrite(RELAY_PIN, HIGH); // Activar relay
+  delay(5000);                   // Mantener relay activado por 5 segundos
+  digitalWrite(RELAY_PIN, LOW);  // Apagar relay
 }
