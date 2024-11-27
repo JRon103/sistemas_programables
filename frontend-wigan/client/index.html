@@ -8,6 +8,8 @@
 </head>
 <body>
     <h1>Control de Acceso</h1>
+    
+    <!-- TABLA CON LISTADO DE USUARIOS -->
     <table id="usuarios">
         <thead>
             <tr>
@@ -16,12 +18,24 @@
                 <th>Acciones</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+            <!-- LAS CELDAS SON GENERADAS DINÁMICAMENTE CON JS -->
+        </tbody>
     </table>
+
+    <!-- FORMULARIO PARA AGREGAR/EDITAR USUARIOS -->
     <form id="usuario-form">
+        <input type="hidden" id="user-id" value="">
         <input type="text" id="hexa" placeholder="Hexa" required>
-        <button type="submit">Agregar</button>
+        <button type="submit">Guardar</button>
     </form>
+
+    <!-- CONTENEDOR PARA MENSAJES EN TIEMPO REAL -->
+    <h2>Bitacora: </h2>
+    <div id="mensajes" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+        <!-- LOS MENSAJES SON GENERADOS DINÁMICAMENTE CON JS -->
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

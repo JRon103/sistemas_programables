@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import mysql.connector
+import time
 
 # Configuración de la base de datos
 DB_CONFIG = {
@@ -10,11 +11,18 @@ DB_CONFIG = {
     'database': 'bd_wigan'
 }
 
+# Cola de eventos para mensajes en tiempo real
+event_queue = []
+
 class SimpleServer(BaseHTTPRequestHandler):
 
     def do_GET(self):
-        if self.path == "/usuarios":
+        if self.path.startswith("/usuarios/check?hexa="):
+            self.check_usuario()
+        elif self.path == "/usuarios":
             self.get_usuarios()
+        elif self.path == "/usuarios/events":
+            self.handle_events()
         else:
             self.not_found()
 
@@ -85,15 +93,61 @@ class SimpleServer(BaseHTTPRequestHandler):
 
         self.respond(200, {"message": "Usuario eliminado"})
 
-    def not_found(self):
-        self.respond(404, {"error": "Not Found"})
-        
+    def check_usuario(self):
+        # Extraer el valor de 'hexa' del query string
+        import urllib.parse
+        query = urllib.parse.urlparse(self.path).query
+        params = urllib.parse.parse_qs(query)
+        hexa = params.get("hexa", [None])[0]
+
+        if hexa:
+            try:
+                conn = mysql.connector.connect(**DB_CONFIG)
+                cursor = conn.cursor(dictionary=True)
+                cursor.execute("SELECT * FROM usuarios WHERE hexa = %s", (hexa,))
+                usuario = cursor.fetchone()
+                conn.close()
+
+                if usuario:
+                    message = f"Acceso autorizado para {hexa}"
+                else:
+                    message = f"Usuario {hexa} no registrado"
+
+                # Agregar el mensaje a la cola de eventos
+                event_queue.append(message)
+
+                # Responder al cliente actual
+                self.respond(200, {"message": message})
+            except Exception as e:
+                self.respond(500, {"error": str(e)})
+        else:
+            self.respond(400, {"error": "Falta el parámetro 'hexa'"})
+
+    def handle_events(self):
+        # Configuración para Server-Sent Events
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+
+        # Mantener la conexión abierta para enviar eventos en tiempo real
+        try:
+            while True:
+                if event_queue:
+                    message = event_queue.pop(0)  # Sacar el primer mensaje de la cola
+                    self.wfile.write(f"data: {message}\n\n".encode())
+                    self.wfile.flush()
+                time.sleep(1)  # Intervalo entre mensajes
+        except:
+            pass  # Manejo de desconexiones del cliente
+
     def respond(self, status, data):
         self.send_response(status)
         self.send_header("Content-type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")  # Permite cualquier origen
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")  # Métodos permitidos
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")  # Cabeceras permitidas
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
 
@@ -104,11 +158,9 @@ class SimpleServer(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
-    # def respond(self, status, data):
-    #     self.send_response(status)
-    #     self.send_header("Content-type", "application/json")
-    #     self.end_headers()
-    #     self.wfile.write(json.dumps(data).encode())
+    def not_found(self):
+        self.respond(404, {"error": "Not Found"})
+
 
 if __name__ == "__main__":
     server = HTTPServer(('localhost', 8080), SimpleServer)
