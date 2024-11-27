@@ -8,6 +8,7 @@
 </head>
 <body>
     <h1>Control de Acceso</h1>
+    <!--TABLA CON LISTADO DE USUARIOS-->
     <table id="usuarios">
         <thead>
             <tr>
@@ -16,11 +17,15 @@
                 <th>Acciones</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+            <!--LAS CELDAS SON GENERADAS DINÁMICAMENTE CON JS-->
+        </tbody>
     </table>
+
     <form id="usuario-form">
+        <input type="hidden" id="user-id" value="">
         <input type="text" id="hexa" placeholder="Hexa" required>
-        <button type="submit">Agregar</button>
+        <button type="submit">Guardar</button>
     </form>
     <script src="app.js"></script>
 </body>
