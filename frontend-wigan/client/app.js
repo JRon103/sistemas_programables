@@ -3,6 +3,9 @@ const API_URL = "http://localhost:8080/usuarios";
 // Cargar usuarios al inicio
 fetchUsuarios();
 
+// Configuración para escuchar eventos en tiempo real
+initializeRealTimeEvents();
+
 // Manejo del formulario
 const form = document.getElementById("usuario-form");
 form.addEventListener("submit", handleFormSubmit);
@@ -96,4 +99,24 @@ async function deleteUsuario(id) {
 function editUsuario(id, hexa) {
     document.getElementById("user-id").value = id; // Establece el ID en el formulario
     document.getElementById("hexa").value = hexa; // Establece el valor actual en el campo
+}
+
+// Inicializar eventos en tiempo real
+function initializeRealTimeEvents() {
+    const eventSource = new EventSource("http://localhost:8080/usuarios/events");
+    const mensajes = document.getElementById("mensajes");
+
+    eventSource.onmessage = function (event) {
+        const nuevoMensaje = document.createElement("p");
+        nuevoMensaje.textContent = event.data; // Mostrar el mensaje recibido
+        mensajes.appendChild(nuevoMensaje);
+
+        // Scroll automático hacia abajo si hay muchos mensajes
+        mensajes.scrollTop = mensajes.scrollHeight;
+    };
+
+    eventSource.onerror = function () {
+        console.error("Error al conectar con el servidor para eventos en tiempo real.");
+        eventSource.close(); // Cierra la conexión en caso de error
+    };
 }
