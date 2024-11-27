@@ -1,2 +1,12 @@
+# Misc files
 .vs
 .env
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor and system configuration files
+!.vscode/extensions.json
+.idea
+.DS_Store
