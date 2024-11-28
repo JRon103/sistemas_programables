@@ -12,13 +12,17 @@ WIEGAND wg;
 
 EthernetClient client;
 
+// Configuración de Ethernet
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+
 void setup() {
   Serial.begin(9600);
+  Serial.println("Iniciando sistema...");
 
   // Inicializar Ethernet con DHCP
-  if (Ethernet.begin() == 0) {
+  if (Ethernet.begin(mac) == 0) {
     Serial.println("Error obteniendo IP por DHCP");
-    while (true); // Detener ejecución si falla DHCP
+    while (true); // Detener si no se obtiene una IP
   }
 
   // Mostrar la IP asignada
@@ -53,18 +57,16 @@ void loop() {
 
 // Función para enviar los datos a la API
 bool enviarDatosAPI(String tarjetaHex) {
-  if (client.connect("34.44.90.188", 80)) { // Usar el hostname o IP de la API
+  String url = "/usuarios/check?hexa=" + tarjetaHex; // Construir la URL completa
+
+  if (client.connect("34.44.90.188", 8080)) { // Conectar al servidor en el puerto 8080
     Serial.println("Conectado al servidor");
-    
-    // Crear la solicitud POST
-    String postData = "{\"card\":\"" + tarjetaHex + "\"}"; // JSON con datos de la tarjeta
-    client.println("POST /endpoint HTTP/1.1"); // Cambiar "/endpoint" al nombre correcto
+
+    // Crear la solicitud GET
+    client.println("GET " + url + " HTTP/1.1");
     client.println("Host: 34.44.90.188");
-    client.println("Content-Type: application/json");
-    client.print("Content-Length: ");
-    client.println(postData.length());
+    client.println("Connection: close");
     client.println();
-    client.println(postData);
 
     // Leer la respuesta
     while (client.connected()) {
@@ -88,6 +90,7 @@ bool enviarDatosAPI(String tarjetaHex) {
 
 // Función para activar el relay
 void activarRelay() {
+  Serial.println("Activando relay...");
   digitalWrite(RELAY_PIN, HIGH); // Activar relay
   delay(5000);                   // Mantener relay activado por 5 segundos
   digitalWrite(RELAY_PIN, LOW);  // Apagar relay
