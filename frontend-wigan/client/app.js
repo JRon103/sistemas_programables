@@ -1,10 +1,10 @@
-const API_URL = "http://localhost:8080/usuarios";
+const API_URL = "http://34.44.90.188:8080/usuarios";
 
 // Cargar usuarios al inicio
 fetchUsuarios();
 
 // Configuración para escuchar eventos en tiempo real
-initializeRealTimeEvents();
+//initializeRealTimeEvents();
 
 // Manejo del formulario
 const form = document.getElementById("usuario-form");
@@ -63,7 +63,7 @@ function displayMessage(message, color) {
 
 // Inicializar eventos en tiempo real
 function initializeRealTimeEvents() {
-    const eventSource = new EventSource("http://localhost:8080/usuarios/events");
+    const eventSource = new EventSource("http://34.44.90.188:8080/usuarios/events");
     const mensajes = document.getElementById("mensajes");
 
     eventSource.onopen = function () {
@@ -87,6 +87,62 @@ function initializeRealTimeEvents() {
             console.log("Intentando reconectar...");
         }
     };
+}
+
+// Función para manejar el envío del formulario
+async function handleFormSubmit(event) {
+    event.preventDefault();
+    const id = document.getElementById("user-id").value;
+    const hexa = document.getElementById("hexa").value;
+    if (id) {
+        await updateUsuario(id, hexa); // Actualiza el usuario
+    } else {
+        await addUsuario(hexa); // Crea un nuevo usuario
+    }
+    form.reset(); // Limpia el formulario
+    fetchUsuarios(); // Recarga los usuarios
+}
+// Función para crear un nuevo usuario
+async function addUsuario(hexa) {
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ hexa })
+        });
+        if (!response.ok) throw new Error("Error al agregar usuario");
+        displayMessage("Usuario agregado exitosamente.", "green");
+    } catch (error) {
+        console.error("Error al agregar usuario:", error);
+        displayMessage("Error al agregar usuario: " + error.message, "red");
+    }
+}
+// Función para actualizar un usuario
+async function updateUsuario(id, hexa) {
+    try {
+        const response = await fetch(`${API_URL}/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ hexa })
+        });
+        if (!response.ok) throw new Error("Error al actualizar usuario");
+        displayMessage("Usuario actualizado exitosamente.", "green");
+    } catch (error) {
+        console.error("Error al actualizar usuario:", error);
+        displayMessage("Error al actualizar usuario: " + error.message, "red");
+    }
+}
+// Función para eliminar un usuario
+async function deleteUsuario(id) {
+    try {
+        const response = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+        if (!response.ok) throw new Error("Error al eliminar usuario");
+        fetchUsuarios(); // Recarga los usuarios
+        displayMessage("Usuario eliminado exitosamente.", "green");
+    } catch (error) {
+        console.error("Error al eliminar usuario:", error);
+        displayMessage("Error al eliminar usuario: " + error.message, "red");
+    }
 }
 
 
