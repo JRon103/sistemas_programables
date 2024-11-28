@@ -5,9 +5,9 @@ import time
 
 # Configuración de la base de datos
 DB_CONFIG = {
-    'host': 'localhost',
+    'host': '34.41.255.104',
     'user': 'root',
-    'password': 'password',
+    'password': 'carrito',
     'database': 'bd_wigan'
 }
 
@@ -109,7 +109,7 @@ class SimpleServer(BaseHTTPRequestHandler):
                 conn.close()
 
                 if usuario:
-                    message = f"Acceso autorizado para {hexa}"
+                    message = f"success"
                 else:
                     message = f"Usuario {hexa} no registrado"
 
@@ -163,6 +163,8 @@ class SimpleServer(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = HTTPServer(('localhost', 8080), SimpleServer)
+    #server = HTTPServer(('localhost', 3002), SimpleServer)
+    server = HTTPServer(('0.0.0.0', 8080), SimpleServer)
+
     print("Servidor corriendo en http://localhost:8080")
     server.serve_forever()
