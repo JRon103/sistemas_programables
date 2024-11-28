@@ -34,6 +34,7 @@ async function fetchUsuarios() {
         });
     } catch (error) {
         console.error("Error al cargar usuarios:", error);
+        displayMessage("Error al cargar usuarios: " + error.message, "red");
     }
 }
 
@@ -45,11 +46,9 @@ async function handleFormSubmit(event) {
     const hexa = document.getElementById("hexa").value;
 
     if (id) {
-        // Si hay un ID, actualiza el usuario
-        await updateUsuario(id, hexa);
+        await updateUsuario(id, hexa); // Actualiza el usuario
     } else {
-        // Si no hay ID, crea un nuevo usuario
-        await addUsuario(hexa);
+        await addUsuario(hexa); // Crea un nuevo usuario
     }
 
     form.reset(); // Limpia el formulario
@@ -65,8 +64,10 @@ async function addUsuario(hexa) {
             body: JSON.stringify({ hexa })
         });
         if (!response.ok) throw new Error("Error al agregar usuario");
+        displayMessage("Usuario agregado exitosamente.", "green");
     } catch (error) {
         console.error("Error al agregar usuario:", error);
+        displayMessage("Error al agregar usuario: " + error.message, "red");
     }
 }
 
@@ -79,8 +80,10 @@ async function updateUsuario(id, hexa) {
             body: JSON.stringify({ hexa })
         });
         if (!response.ok) throw new Error("Error al actualizar usuario");
+        displayMessage("Usuario actualizado exitosamente.", "green");
     } catch (error) {
         console.error("Error al actualizar usuario:", error);
+        displayMessage("Error al actualizar usuario: " + error.message, "red");
     }
 }
 
@@ -90,8 +93,10 @@ async function deleteUsuario(id) {
         const response = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
         if (!response.ok) throw new Error("Error al eliminar usuario");
         fetchUsuarios(); // Recarga los usuarios
+        displayMessage("Usuario eliminado exitosamente.", "green");
     } catch (error) {
         console.error("Error al eliminar usuario:", error);
+        displayMessage("Error al eliminar usuario: " + error.message, "red");
     }
 }
 
@@ -106,17 +111,33 @@ function initializeRealTimeEvents() {
     const eventSource = new EventSource("http://localhost:8080/usuarios/events");
     const mensajes = document.getElementById("mensajes");
 
+    eventSource.onopen = function () {
+        console.log("Conexión establecida para eventos en tiempo real.");
+    };
+
     eventSource.onmessage = function (event) {
         const nuevoMensaje = document.createElement("p");
         nuevoMensaje.textContent = event.data; // Mostrar el mensaje recibido
         mensajes.appendChild(nuevoMensaje);
 
-        // Scroll automático hacia abajo si hay muchos mensajes
-        mensajes.scrollTop = mensajes.scrollHeight;
+        if (mensajes) {
+            mensajes.scrollTop = mensajes.scrollHeight; // Scroll automático
+        }
     };
 
     eventSource.onerror = function () {
         console.error("Error al conectar con el servidor para eventos en tiempo real.");
-        eventSource.close(); // Cierra la conexión en caso de error
+        if (eventSource.readyState === EventSource.CLOSED) {
+            console.log("Intentando reconectar...");
+        }
     };
+}
+
+// Función para mostrar mensajes en el contenedor
+function displayMessage(message, color) {
+    const mensajes = document.getElementById("mensajes");
+    const nuevoMensaje = document.createElement("p");
+    nuevoMensaje.textContent = message;
+    nuevoMensaje.style.color = color;
+    mensajes.appendChild(nuevoMensaje);
 }
