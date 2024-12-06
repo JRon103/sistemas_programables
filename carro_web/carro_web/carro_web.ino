@@ -15,7 +15,6 @@ DHT dht(DHTPIN, DHTTYPE);
 bool bandera = false;
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 IPAddress server(34, 41, 255, 104); // Dirección IP del servidor MySQL en la nube
-//IPAddress ip(169, 254, 121, 176); 
 EthernetServer webServer(80);
 
 char usuario[] = "root";
@@ -80,7 +79,9 @@ void setup() {
 
 void loop() {
   EthernetClient cliente = webServer.available();
-  //float t = dht.readTemperature();
+  float t = dht.readTemperature();
+  String displayTemp = isnan(t) ? getLastTemperature() : String(t, 2);
+  
   if (cliente) {
     Serial.println("Nuevo Cliente");
     boolean espacioenblanco = true;
@@ -119,6 +120,9 @@ void loop() {
           cliente.println("</head>");
           cliente.println("<body>");
           cliente.println("<h1 align = 'center'>EQUIPO TeamSP</h1> <h3 align = 'center'>Control de vehiculo por Servidor Web con Arduino</h3>");
+             // Temperature Display
+          cliente.println("<div class='temp'>Temperatura Actual: " + displayTemp + " °C</div>");
+          
           cliente.println("<div style='text-align:center;'>");
           cliente.println("<button onClick=location.href='./?accion=FORWARD' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:65px;'>Arriba</button>");
           cliente.println("</div>");
@@ -195,7 +199,26 @@ void loop() {
 
 }
 
-
+String getLastTemperature() {
+  MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+  char query[100];
+  sprintf(query, "SELECT temperatura FROM temperaturas WHERE lugar='%s' ORDER BY id DESC LIMIT 1", lugar);
+  
+  // Execute query
+  cur_mem->execute(query);
+  
+  // Fetch result
+  column_names *cols = cur_mem->get_columns();
+  row_values *row = cur_mem->get_next_row();
+  
+  String lastTemp = "N/A";
+  if (row) {
+    lastTemp = row->values[0];
+  }
+  
+  delete cur_mem;
+  return lastTemp;
+}
 // Funciones para controlar motores
 void controlarMotor(AF_DCMotor &motor, bool invertido, int accion) {
   if (invertido) {
