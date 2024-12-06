@@ -40,10 +40,10 @@ AF_DCMotor motor2(2); // Trasero derecho
 AF_DCMotor motor3(3); // Frontal derecho
 AF_DCMotor motor4(4); // Frontal izquierdo
 
-bool invertidoMotor1 = false;
+bool invertidoMotor1 = true;
 bool invertidoMotor2 = false;
-bool invertidoMotor3 = true;
-bool invertidoMotor4 = true;
+bool invertidoMotor3 = true;//moridos
+bool invertidoMotor4 = true;//moridos
 
 
 void setup() {
@@ -150,47 +150,47 @@ void loop() {
   }
 
   // Insertar en la base de datos cada 2 minutos
-unsigned long currentMillis = millis();
-if (currentMillis - lastInsertTime >= interval) {
-    Serial.println("Intervalo alcanzado. Intentando insertar datos.");
-    lastInsertTime = currentMillis;
-    
-    // Verificar si la conexión está activa
-    if (!conn.connected()) {  
-        Serial.println("Reconectando...");
-        if (conn.connect(server, 3306, usuario, pass)) {
-            Serial.println("Reconectado exitosamente.");
-            MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
-            char use_db[50];
-            sprintf(use_db, "USE %s", db_name);
-            cur_mem->execute(use_db);
-            delete cur_mem;
-        } else {
-            Serial.println("Error al reconectar.");
-            return;  // Sale de loop si la reconexión falla
-        }
-    }
-
-    // Verificar si la lectura de temperatura es válida
-    float t = dht.readTemperature();
-    if (isnan(t)) {
-        Serial.println("Error al leer la temperatura! No se insertarán datos.");
-        return; // Salir si hay un error en la lectura
-    }
-
-    // Convertir el valor de temperatura a una cadena
-    char tempStr[10]; // Suficientemente grande para el valor formateado
-    dtostrf(t, 4, 2, tempStr); // Convierte el float t a string con 2 decimales
-
-    // Construcción de la consulta SQL
-    Serial.println("Insertando Datos");
-    sprintf(INSERT_SQL, "INSERT INTO temperaturas(temperatura, lugar) VALUES(%s, '%s')", tempStr, lugar);
-    Serial.print("Consulta SQL: ");
-    Serial.println(INSERT_SQL); // Imprimir consulta para verificar formato
-    MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
-    cur_mem->execute(INSERT_SQL);  // Inserta los datos
-    delete cur_mem;
-}
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastInsertTime >= interval) {
+      Serial.println("Intervalo alcanzado. Intentando insertar datos.");
+      lastInsertTime = currentMillis;
+      
+      // Verificar si la conexión está activa
+      if (!conn.connected()) {  
+          Serial.println("Reconectando...");
+          if (conn.connect(server, 3306, usuario, pass)) {
+              Serial.println("Reconectado exitosamente.");
+              MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+              char use_db[50];
+              sprintf(use_db, "USE %s", db_name);
+              cur_mem->execute(use_db);
+              delete cur_mem;
+          } else {
+              Serial.println("Error al reconectar.");
+              return;  // Sale de loop si la reconexión falla
+          }
+      }
+  
+      // Verificar si la lectura de temperatura es válida
+      float t = dht.readTemperature();
+      if (isnan(t)) {
+          Serial.println("Error al leer la temperatura! No se insertarán datos.");
+          return; // Salir si hay un error en la lectura
+      }
+  
+      // Convertir el valor de temperatura a una cadena
+      char tempStr[10]; // Suficientemente grande para el valor formateado
+      dtostrf(t, 4, 2, tempStr); // Convierte el float t a string con 2 decimales
+  
+      // Construcción de la consulta SQL
+      Serial.println("Insertando Datos");
+      sprintf(INSERT_SQL, "INSERT INTO temperaturas(temperatura, lugar) VALUES(%s, '%s')", tempStr, lugar);
+      Serial.print("Consulta SQL: ");
+      Serial.println(INSERT_SQL); // Imprimir consulta para verificar formato
+      MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+      cur_mem->execute(INSERT_SQL);  // Inserta los datos
+      delete cur_mem;
+  }
 
 
 }
