@@ -15,7 +15,6 @@ DHT dht(DHTPIN, DHTTYPE);
 bool bandera = false;
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 IPAddress server(34, 41, 255, 104); // Dirección IP del servidor MySQL en la nube
-//IPAddress ip(169, 254, 121, 176); 
 EthernetServer webServer(80);
 
 char usuario[] = "root";
@@ -40,10 +39,10 @@ AF_DCMotor motor2(2); // Trasero derecho
 AF_DCMotor motor3(3); // Frontal derecho
 AF_DCMotor motor4(4); // Frontal izquierdo
 
-bool invertidoMotor1 = false;
+bool invertidoMotor1 = true;
 bool invertidoMotor2 = false;
-bool invertidoMotor3 = true;
-bool invertidoMotor4 = true;
+bool invertidoMotor3 = true;//moridos
+bool invertidoMotor4 = true;//moridos
 
 
 void setup() {
@@ -80,7 +79,9 @@ void setup() {
 
 void loop() {
   EthernetClient cliente = webServer.available();
-  //float t = dht.readTemperature();
+  float t = dht.readTemperature();
+  String displayTemp = isnan(t) ? getLastTemperature() : String(t, 2);
+  
   if (cliente) {
     Serial.println("Nuevo Cliente");
     boolean espacioenblanco = true;
@@ -116,24 +117,50 @@ void loop() {
           cliente.println();
           cliente.println("<html>");
           cliente.println("<head>");
+          cliente.println("<style>");
+          cliente.println("body {");
+          cliente.println("   font-family: Arial, sans-serif;");
+          cliente.println("   text-align: center;");
+          cliente.println("   background-color: #f4f4f4;");
+          cliente.println("   margin: 0;");
+          cliente.println("   padding: 0;");
+          cliente.println("}");
+          cliente.println(".temp {");
+          cliente.println("   background-color: #ffddcc;");
+          cliente.println("   padding: 10px;");
+          cliente.println("   font-size: 20px;");
+          cliente.println("   border-radius: 8px;");
+          cliente.println("   display: inline-block;");
+          cliente.println("   margin-bottom: 20px;");
+          cliente.println("}");
+          cliente.println(".button {");
+          cliente.println("   border-radius: 5px;");
+          cliente.println("   font-size: 18px;");
+          cliente.println("}");
+          cliente.println("</style>");
           cliente.println("</head>");
           cliente.println("<body>");
-          cliente.println("<h1 align = 'center'>EQUIPO TeamSP</h1> <h3 align = 'center'>Control de vehiculo por Servidor Web con Arduino</h3>");
+          cliente.println("<br>");
+          cliente.println("<h1 align='center'>EQUIPO TeamSP</h1>");
+          cliente.println("<h3 align='center'>Control de vehiculo por Servidor Web con Arduino</h3>");
+          cliente.println("<br>");
+          cliente.println("<div class='temp'>Temperatura Actual: " + displayTemp + " C</div>");
           cliente.println("<div style='text-align:center;'>");
-          cliente.println("<button onClick=location.href='./?accion=FORWARD' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:65px;'>Arriba</button>");
+          cliente.println("<button class='button' onClick=location.href='./?accion=FORWARD' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:90px;'>Arriba</button>");
           cliente.println("</div>");
-          cliente.println("<span> <br> </span>");
+          cliente.println("<span><br></span>");
           cliente.println("<div style='text-align:center;'>");
-          cliente.println("<button onClick=location.href='./?accion=LEFT' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:70px;'>Izquierda</button>");
-          cliente.println("<button onClick=location.href='./?accion=STOP' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:70px;'>Detener</button>");
-          cliente.println("<button onClick=location.href='./?accion=RIGHT' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:70px;'>Derecha</button>");
-          cliente.println(" </div>");
-          cliente.println("<span> <br> </span>");
+          cliente.println("<button class='button' onClick=location.href='./?accion=LEFT' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:90px;'>Izquierda</button>");
+          cliente.println("<button class='button' onClick=location.href='./?accion=STOP' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:90px;'>Detener</button>");
+          cliente.println("<button class='button' onClick=location.href='./?accion=RIGHT' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:90px;'>Derecha</button>");
+          cliente.println("</div>");
+          cliente.println("<span><br></span>");
           cliente.println("<div style='text-align:center;'>");
-          cliente.println("<button onClick=location.href='./?accion=BACKWARD' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:65px;'>Abajo</button>");
+          cliente.println("<button class='button' onClick=location.href='./?accion=BACKWARD' style='margin:auto;background-color: #84B1FF;color: snow;padding: 10px;border: 1px solid #3F7CFF;width:90px;'>Abajo</button>");
           cliente.println("</div>");
           cliente.println("</body>");
           cliente.println("</html>");
+          
           break;
         }
         
@@ -150,52 +177,71 @@ void loop() {
   }
 
   // Insertar en la base de datos cada 2 minutos
-unsigned long currentMillis = millis();
-if (currentMillis - lastInsertTime >= interval) {
-    Serial.println("Intervalo alcanzado. Intentando insertar datos.");
-    lastInsertTime = currentMillis;
-    
-    // Verificar si la conexión está activa
-    if (!conn.connected()) {  
-        Serial.println("Reconectando...");
-        if (conn.connect(server, 3306, usuario, pass)) {
-            Serial.println("Reconectado exitosamente.");
-            MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
-            char use_db[50];
-            sprintf(use_db, "USE %s", db_name);
-            cur_mem->execute(use_db);
-            delete cur_mem;
-        } else {
-            Serial.println("Error al reconectar.");
-            return;  // Sale de loop si la reconexión falla
-        }
-    }
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastInsertTime >= interval) {
+      Serial.println("Intervalo alcanzado. Intentando insertar datos.");
+      lastInsertTime = currentMillis;
+      
+      // Verificar si la conexión está activa
+      if (!conn.connected()) {  
+          Serial.println("Reconectando...");
+          if (conn.connect(server, 3306, usuario, pass)) {
+              Serial.println("Reconectado exitosamente.");
+              MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+              char use_db[50];
+              sprintf(use_db, "USE %s", db_name);
+              cur_mem->execute(use_db);
+              delete cur_mem;
+          } else {
+              Serial.println("Error al reconectar.");
+              return;  // Sale de loop si la reconexión falla
+          }
+      }
+  
+      // Verificar si la lectura de temperatura es válida
+      float t = dht.readTemperature();
+      if (isnan(t)) {
+          Serial.println("Error al leer la temperatura! No se insertarán datos.");
+          return; // Salir si hay un error en la lectura
+      }
+  
+      // Convertir el valor de temperatura a una cadena
+      char tempStr[10]; // Suficientemente grande para el valor formateado
+      dtostrf(t, 4, 2, tempStr); // Convierte el float t a string con 2 decimales
+  
+      // Construcción de la consulta SQL
+      Serial.println("Insertando Datos");
+      sprintf(INSERT_SQL, "INSERT INTO temperaturas(temperatura, lugar) VALUES(%s, '%s')", tempStr, lugar);
+      Serial.print("Consulta SQL: ");
+      Serial.println(INSERT_SQL); // Imprimir consulta para verificar formato
+      MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+      cur_mem->execute(INSERT_SQL);  // Inserta los datos
+      delete cur_mem;
+  }
 
-    // Verificar si la lectura de temperatura es válida
-    float t = dht.readTemperature();
-    if (isnan(t)) {
-        Serial.println("Error al leer la temperatura! No se insertarán datos.");
-        return; // Salir si hay un error en la lectura
-    }
 
-    // Convertir el valor de temperatura a una cadena
-    char tempStr[10]; // Suficientemente grande para el valor formateado
-    dtostrf(t, 4, 2, tempStr); // Convierte el float t a string con 2 decimales
-
-    // Construcción de la consulta SQL
-    Serial.println("Insertando Datos");
-    sprintf(INSERT_SQL, "INSERT INTO temperaturas(temperatura, lugar) VALUES(%s, '%s')", tempStr, lugar);
-    Serial.print("Consulta SQL: ");
-    Serial.println(INSERT_SQL); // Imprimir consulta para verificar formato
-    MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
-    cur_mem->execute(INSERT_SQL);  // Inserta los datos
-    delete cur_mem;
 }
 
-
+String getLastTemperature() {
+  MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+  char query[100];
+  sprintf(query, "SELECT temperatura FROM temperaturas ORDER BY fecha DESC LIMIT 1");
+  
+  // Execute query
+  cur_mem->execute(query);
+  
+  // Fetch result
+  column_names *cols = cur_mem->get_columns();
+  row_values *row = cur_mem->get_next_row();
+  
+  String lastTemp = "N/A";
+  if (row) {
+    lastTemp = row->values[0];
+  }
+  
+  delete cur_mem;
+  return lastTemp;
 }
-
-
 // Funciones para controlar motores
 void controlarMotor(AF_DCMotor &motor, bool invertido, int accion) {
   if (invertido) {
