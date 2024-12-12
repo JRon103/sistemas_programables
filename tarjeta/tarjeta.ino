@@ -19,6 +19,8 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Iniciando sistema...");
 
+  pinMode(RELAY_PIN, OUTPUT);
+ 
   // Inicializar Ethernet con DHCP
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Error obteniendo IP por DHCP");
@@ -39,14 +41,37 @@ void setup() {
 }
 
 void loop() {
-  // Verificar lectura de la tarjeta
   if (wg.available()) {
     uint32_t cardData = wg.getCode();
-    Serial.print("Tarjeta leída: ");
+    Serial.print("Tarjeta leída (Hex): ");
     Serial.println(cardData, HEX); // Mostrar en formato hexadecimal
-    
-    // Enviar datos a la API
-    if (enviarDatosAPI(String(cardData, HEX))) {
+
+    // Opción 1: Usar el valor original en decimal
+    uint32_t originalValue = cardData;
+    Serial.print("Valor original (Decimal): ");
+    Serial.println(originalValue);
+/*
+    // Opción 2: Interpretar como Little Endian
+    uint32_t littleEndianValue = ((cardData & 0xFF) << 24) |
+                                 ((cardData & 0xFF00) << 8) |
+                                 ((cardData & 0xFF0000) >> 8) |
+                                 ((cardData & 0xFF000000) >> 24);
+    Serial.print("Valor interpretado como Little Endian (Decimal): ");
+    Serial.println(littleEndianValue);
+
+    // Opción 3: Dividir entre 2
+    uint32_t dividedValue = cardData / 2;
+    Serial.print("Valor dividido entre 2 (Decimal): ");
+    Serial.println(dividedValue);
+*/
+    // Opción 4: Usar máscara (asumir que solo se usan 24 bits)
+    uint32_t maskedValue = cardData & 0xFFFFFF;
+    Serial.print("Valor con máscara 0xFFFFFF (Decimal): ");
+    Serial.println(maskedValue);
+
+    // Enviar datos según el método que funcione
+   // uint32_t chosenValue = littleEndianValue; // Cambiar según resultado esperado
+    if (enviarDatosAPI(String(maskedValue))) {
       Serial.println("Acceso permitido, activando relay...");
       activarRelay();
     } else {
@@ -54,6 +79,8 @@ void loop() {
     }
   }
 }
+
+
 
 // Función para enviar los datos a la API
 bool enviarDatosAPI(String tarjetaHex) {
@@ -94,4 +121,6 @@ void activarRelay() {
   digitalWrite(RELAY_PIN, HIGH); // Activar relay
   delay(5000);                   // Mantener relay activado por 5 segundos
   digitalWrite(RELAY_PIN, LOW);  // Apagar relay
+  Serial.println("relay apagado...");
+  
 }

@@ -1,6 +1,7 @@
 body {
     font-family: Arial, sans-serif;
     text-align: center;
+    background-color: #96b2b2;
 }
 
 table {
@@ -8,10 +9,50 @@ table {
     border-collapse: collapse;
 }
 
-table, th, td {
+table, th {
     border: 1px solid black;
+    background-color: #8ac2cf;
+}
+table td{
+    border: 1px solid black;
+    background-color: #96b2b2;
 }
 
 th, td {
     padding: 10px;
+}
+
+/* Estilo general para los botones */
+button {
+    background-color: #6a7f9c; 
+    color: white;
+    border: none;
+    padding: 8px 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Efecto hover */
+button:hover {
+    background-color: #45a049; 
+}
+
+/* Botón de advertencia o eliminación */
+button.delete {
+    background-color: #6a7f9c; /* Rojo */
+}
+
+button.delete:hover {
+    background-color: #d32f2f; /* Rojo más oscuro */
+}
+
+/* Botón secundario */
+button.secondary {
+    background-color: #6a7f9c; /* Azul */
+}
+
+button.secondary:hover {
+    background-color: #45a049; /* Azul más oscuro */
 }

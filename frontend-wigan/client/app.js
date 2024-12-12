@@ -32,8 +32,8 @@ async function fetchUsuarios() {
                 <td>${usuario.id}</td>
                 <td>${usuario.hexa}</td>
                 <td>
-                    <button onclick="editUsuario(${usuario.id}, '${usuario.hexa}')">Editar</button>
-                    <button onclick="deleteUsuario(${usuario.id})">Eliminar</button>
+                    <button class="secondary" onclick="editUsuario(${usuario.id}, '${usuario.hexa}')">Editar</button>
+                    <button  class="delete" onclick="deleteUsuario(${usuario.id})">Eliminar</button>
                 </td>
             `;
             tbody.appendChild(row);
